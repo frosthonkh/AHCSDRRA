@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Data Resilience Readiness Assessment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Metrophobic&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --hpe-green: #01A982;
+  --hpe-green-dark: #007A5E;
+  --hpe-teal: #00739D;
+  --hpe-navy: #0D1B2A;
+  --hpe-white: #FFFFFF;
+  --text-primary: #0D1B2A;
+  --text-secondary: #3D5166;
+  --text-muted: #768FA3;
+  --card-bg: rgba(255,255,255,0.97);
+  --surface: #F3F7FA;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Source Sans 3',sans-serif;
+  background:var(--hpe-navy);
+  color:var(--hpe-white);
+  min-height:100vh;
+  overflow-x:hidden;
+  position:relative;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(1,169,130,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(1,169,130,0.04) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;z-index:0;
+}
+body::after{
+  content:'';position:fixed;top:-30%;right:-20%;width:70vw;height:70vw;
+  border-radius:50%;background:radial-gradient(circle,rgba(1,169,130,0.07) 0%,transparent 65%);
+  pointer-events:none;z-index:0;
+}
+.page-wrap{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;}
+
+/* TOPBAR */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 48px;border-bottom:1px solid rgba(255,255,255,0.07);
+  background:rgba(13,27,42,0.75);backdrop-filter:blur(12px);
+  position:sticky;top:0;z-index:100;
+}
+.topbar-company{
+  font-family:'Metrophobic',sans-serif;font-size:15px;font-weight:400;
+  color:var(--hpe-white);letter-spacing:0.06em;text-transform:uppercase;
+}
+.topbar-divider{width:1px;height:22px;background:rgba(255,255,255,0.2);margin:0 16px;}
+.topbar-badge{
+  font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--hpe-green);border:1px solid rgba(1,169,130,0.35);padding:5px 14px;border-radius:99px;
+}
+@media(max-width:600px){.topbar{padding:14px 20px;}.topbar-badge{display:none;}}
+
+/* MAIN */
+.main{flex:1;display:flex;align-items:center;justify-content:center;padding:48px 24px;}
+.survey-card{
+  background:var(--card-bg);color:var(--text-primary);border-radius:20px;width:100%;max-width:700px;
+  overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.45),0 0 0 1px rgba(1,169,130,0.15);
+}
+.card-accent-bar{
+  height:4px;background:linear-gradient(90deg,var(--hpe-green) 0%,var(--hpe-teal) 50%,var(--hpe-green) 100%);
+  background-size:200% 100%;animation:shiftGrad 4s linear infinite;
+}
+@keyframes shiftGrad{0%{background-position:0% 0%;}100%{background-position:200% 0%;}}
+.card-body{padding:48px 52px 52px;}
+@media(max-width:600px){.card-body{padding:32px 24px 36px;}}
+
+/* SCREENS */
+.screen{display:none;}
+.screen.active{display:block;animation:fadeUp 0.4s ease forwards;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+/* INTRO */
+.intro-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--hpe-green-dark);margin-bottom:20px;
+}
+.eyebrow-dot{width:6px;height:6px;border-radius:50%;background:var(--hpe-green);animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(0.7);}}
+.intro-title{
+  font-family:'Metrophobic',sans-serif;font-size:32px;font-weight:400;
+  line-height:1.2;color:var(--text-primary);margin-bottom:14px;
+}
+.intro-title em{font-style:normal;color:var(--hpe-green-dark);}
+.intro-body{font-size:15px;color:var(--text-secondary);line-height:1.75;margin-bottom:32px;}
+
+.veeam-badge{
+  display:flex;align-items:center;gap:10px;background:#F0FBF8;
+  border:1px solid rgba(1,169,130,0.2);border-radius:10px;padding:12px 16px;margin-bottom:28px;
+}
+.veeam-icon{
+  width:32px;height:32px;background:var(--hpe-green);border-radius:7px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.veeam-text{font-size:12px;color:var(--text-secondary);line-height:1.5;}
+.veeam-text strong{color:var(--text-primary);font-weight:600;}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px;}
+@media(max-width:500px){.form-grid{grid-template-columns:1fr;}}
+.field-wrap{display:flex;flex-direction:column;gap:5px;}
+.field-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);}
+.field-wrap input{
+  font-family:'Source Sans 3',sans-serif;font-size:14px;color:var(--text-primary);
+  background:var(--surface);border:1.5px solid rgba(0,0,0,0.09);border-radius:8px;
+  padding:11px 14px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;
+}
+.field-wrap input:focus{border-color:var(--hpe-green);box-shadow:0 0 0 3px rgba(1,169,130,0.12);}
+.field-wrap input::placeholder{color:#B0BFCB;}
+.confidential-note{font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:5px;margin-top:12px;}
+
+/* PROGRESS */
+.progress-header{margin-bottom:28px;}
+.prog-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.prog-counter{font-size:12px;color:var(--text-muted);}
+.prog-track{height:3px;background:#E8EEF3;border-radius:99px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--hpe-green);border-radius:99px;transition:width 0.5s cubic-bezier(0.4,0,0.2,1);}
+
+/* QUESTION */
+.q-num{font-size:11px;color:var(--text-muted);margin-bottom:8px;font-family:'Metrophobic',sans-serif;}
+.q-text{font-family:'Metrophobic',sans-serif;font-size:22px;font-weight:400;line-height:1.3;color:var(--text-primary);margin-bottom:8px;}
+.q-hint{font-size:13px;color:var(--text-muted);line-height:1.65;margin-bottom:24px;padding-left:14px;border-left:2px solid rgba(1,169,130,0.25);}
+.q-multi-note{font-size:12px;color:var(--hpe-green-dark);font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:6px;}
+
+/* SINGLE OPTIONS */
+.options-list{display:flex;flex-direction:column;gap:9px;margin-bottom:28px;}
+.opt{
+  display:flex;align-items:flex-start;gap:14px;padding:14px 16px;
+  background:var(--surface);border:1.5px solid transparent;border-radius:10px;
+  cursor:pointer;transition:all 0.18s;text-align:left;width:100%;position:relative;overflow:hidden;
+}
+.opt::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--hpe-green);
+  transform:scaleY(0);transform-origin:center;transition:transform 0.2s;
+}
+.opt:hover{border-color:rgba(1,169,130,0.3);background:#F0FBF8;}
+.opt:hover::before{transform:scaleY(0.6);}
+.opt.selected{border-color:var(--hpe-green);background:#EBF8F4;}
+.opt.selected::before{transform:scaleY(1);}
+.opt-radio{
+  width:20px;height:20px;border-radius:50%;border:2px solid #C4D0DA;
+  flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;
+}
+.opt.selected .opt-radio{border-color:var(--hpe-green);background:var(--hpe-green);}
+.opt-radio-inner{width:7px;height:7px;border-radius:50%;background:white;opacity:0;transform:scale(0);transition:all 0.2s;}
+.opt.selected .opt-radio-inner{opacity:1;transform:scale(1);}
+.opt-body{flex:1;}
+.opt-label{display:block;font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:2px;}
+.opt-desc{font-size:12px;color:var(--text-muted);line-height:1.5;}
+
+/* MULTI OPTIONS */
+.multi-options-list{display:flex;flex-direction:column;gap:9px;margin-bottom:28px;}
+.mopt{
+  display:flex;align-items:flex-start;gap:14px;padding:13px 16px;
+  background:var(--surface);border:1.5px solid transparent;border-radius:10px;
+  cursor:pointer;transition:all 0.18s;text-align:left;width:100%;
+}
+.mopt:hover{border-color:rgba(1,169,130,0.3);background:#F0FBF8;}
+.mopt.selected{border-color:var(--hpe-green);background:#EBF8F4;}
+.mopt-checkbox{
+  width:20px;height:20px;border-radius:5px;border:2px solid #C4D0DA;
+  flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;
+}
+.mopt.selected .mopt-checkbox{border-color:var(--hpe-green);background:var(--hpe-green);}
+.mopt-check{opacity:0;transition:opacity 0.2s;}
+.mopt.selected .mopt-check{opacity:1;}
+.mopt-body{flex:1;}
+.mopt-label{display:block;font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:2px;}
+.mopt-desc{font-size:12px;color:var(--text-muted);line-height:1.5;}
+
+/* NAV */
+.nav-row{display:flex;justify-content:space-between;align-items:center;}
+.btn-back{
+  font-family:'Source Sans 3',sans-serif;font-size:14px;font-weight:500;color:var(--text-muted);
+  background:none;border:none;cursor:pointer;padding:11px 0;display:flex;align-items:center;gap:6px;transition:color 0.15s;
+}
+.btn-back:hover{color:var(--text-primary);}
+.btn-back:disabled{opacity:0.3;cursor:not-allowed;}
+.btn-primary{
+  font-family:'Source Sans 3',sans-serif;font-size:14px;font-weight:600;color:white;
+  background:var(--hpe-green);border:none;border-radius:8px;padding:12px 28px;cursor:pointer;
+  display:flex;align-items:center;gap:8px;transition:background 0.15s,transform 0.1s;letter-spacing:0.02em;
+}
+.btn-primary:hover{background:var(--hpe-green-dark);}
+.btn-primary:active{transform:scale(0.98);}
+.btn-primary:disabled{opacity:0.35;cursor:not-allowed;}
+
+/* RESULTS */
+.result-header{text-align:center;margin-bottom:32px;}
+.score-ring-wrap{position:relative;width:180px;height:180px;margin:0 auto 20px;}
+.score-ring-wrap svg{width:100%;height:100%;transform:rotate(-90deg);}
+.score-ring-bg{fill:none;stroke:#E8EEF3;stroke-width:10;}
+.score-ring-fg{fill:none;stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset 1.4s cubic-bezier(0.4,0,0.2,1),stroke 0.5s;}
+.score-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;}
+.score-num{font-family:'Metrophobic',sans-serif;font-size:46px;font-weight:400;line-height:1;display:block;}
+.score-denom{font-size:13px;color:var(--text-muted);}
+.result-grade{font-family:'Metrophobic',sans-serif;font-size:24px;font-weight:400;margin-bottom:8px;}
+.result-tagline{font-size:14px;color:var(--text-secondary);max-width:480px;margin:0 auto;line-height:1.7;}
+
+.section-label-row{display:flex;align-items:center;gap:10px;margin-bottom:18px;margin-top:4px;}
+.section-label-row h3{font-family:'Metrophobic',sans-serif;font-size:15px;font-weight:400;color:var(--text-primary);white-space:nowrap;}
+.section-divider{flex:1;height:1px;background:#E8EEF3;}
+
+/* 4-CATEGORY BREAKDOWN — 2 columns, 2 rows */
+.breakdown-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:32px;}
+@media(max-width:500px){.breakdown-grid{grid-template-columns:1fr;}}
+
+.bd-card{
+  background:var(--surface);border-radius:12px;padding:16px 16px 14px;
+  border:1px solid transparent;
+  transition:border-color 0.2s;
+}
+
+.bd-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.bd-title{font-size:13px;font-weight:600;color:var(--text-primary);line-height:1.3;}
+.bd-pct{font-family:'Metrophobic',sans-serif;font-size:22px;font-weight:400;line-height:1;flex-shrink:0;margin-left:8px;}
+
+.bd-bar-track{height:5px;background:#E0E8EF;border-radius:99px;overflow:hidden;margin-bottom:8px;}
+.bd-bar-fill{height:100%;border-radius:99px;transition:width 1.1s cubic-bezier(0.4,0,0.2,1);}
+
+.bd-sub-labels{display:flex;flex-wrap:wrap;gap:4px;}
+.bd-sub-pill{
+  font-size:10px;color:var(--text-muted);background:rgba(0,0,0,0.04);
+  padding:2px 7px;border-radius:99px;border:1px solid rgba(0,0,0,0.06);
+}
+
+/* MULTI RESULT */
+.multi-result-block{
+  background:var(--surface);border-radius:12px;padding:18px 20px;margin-bottom:14px;
+  border-left:3px solid var(--hpe-green);
+}
+.multi-result-block h4{
+  font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;
+  color:var(--text-muted);margin-bottom:10px;
+}
+.multi-result-block ul{list-style:none;display:flex;flex-direction:column;gap:6px;}
+.multi-result-block li{font-size:13px;color:var(--text-secondary);display:flex;align-items:flex-start;gap:8px;line-height:1.5;}
+.multi-bullet{width:5px;height:5px;border-radius:50%;background:var(--hpe-green);flex-shrink:0;margin-top:6px;}
+
+/* SEND */
+.send-area{text-align:center;margin-top:24px;}
+.btn-send{
+  font-family:'Source Sans 3',sans-serif;font-size:15px;font-weight:600;color:white;
+  background:linear-gradient(135deg,var(--hpe-green-dark),var(--hpe-teal));
+  border:none;border-radius:10px;padding:15px 40px;cursor:pointer;width:100%;
+  transition:opacity 0.2s,transform 0.15s;letter-spacing:0.02em;margin-bottom:10px;
+}
+.btn-send:hover{opacity:0.9;}
+.btn-send:active{transform:scale(0.99);}
+.btn-send:disabled{opacity:0.4;cursor:not-allowed;}
+.send-note{font-size:11px;color:var(--text-muted);line-height:1.6;}
+
+footer{text-align:center;padding:20px 24px;font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:0.05em;position:relative;z-index:1;}
+
+.toast{
+  position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(16px);
+  background:#0A2E20;color:white;border:1px solid rgba(1,169,130,0.35);
+  padding:13px 24px;border-radius:10px;font-size:14px;font-family:'Source Sans 3',sans-serif;
+  opacity:0;pointer-events:none;transition:all 0.35s cubic-bezier(0.4,0,0.2,1);z-index:9999;white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <header class="topbar">
+    <div style="display:flex;align-items:center;">
+      <span class="topbar-company">APAC Hybrid Cloud Solutions</span>
+    </div>
+    <div style="display:flex;align-items:center;">
+      <div class="topbar-divider"></div>
+      <span class="topbar-badge">Data Resilience Readiness Assessment</span>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="survey-card">
+      <div class="card-accent-bar"></div>
+      <div class="card-body">
+
+        <!-- ── INTRO ── -->
+        <div id="screen-intro" class="screen active">
+          <div class="intro-eyebrow">
+            <span class="eyebrow-dot"></span>
+            HPE Hybrid Cloud Solutions
+          </div>
+          <h1 class="intro-title">How resilient is your organisation against a <em>ransomware attack?</em></h1>
+          <p class="intro-body">This assessment evaluates your backup and recovery posture, hardware immutability, recovery speed, and hybrid cloud readiness — producing a personalised resilience score and a summary.</p>
+          <div class="veeam-badge">
+            <div class="veeam-icon">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2L16 6V12L9 16L2 12V6L9 2Z" stroke="white" stroke-width="1.5" fill="none"/><circle cx="9" cy="9" r="2.5" fill="white"/></svg>
+            </div>
+            <div class="veeam-text"><strong>Backed by HPE Hybrid Cloud Solutions + Data Protection Expertise.</strong> Your results will be reviewed by a certified HPE specialist.</div>
+          </div>
+          <div class="form-grid">
+            <div class="field-wrap">
+              <label class="field-label">Full Name *</label>
+              <input type="text" id="f-name" placeholder="Your full name"/>
+            </div>
+            <div class="field-wrap">
+              <label class="field-label">Job Title *</label>
+              <input type="text" id="f-title" placeholder="e.g. CIO, IT Director"/>
+            </div>
+            <div class="field-wrap" style="grid-column:1/-1">
+              <label class="field-label">Company *</label>
+              <input type="text" id="f-company" placeholder="Organisation name"/>
+            </div>
+            <div class="field-wrap" style="grid-column:1/-1">
+              <label class="field-label">Work Email *</label>
+              <input type="email" id="f-email" placeholder="you@company.com"/>
+            </div>
+          </div>
+          <button class="btn-primary" id="intro-next" style="width:100%;justify-content:center;">
+            Begin Assessment
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M9 4L13 8L9 12" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <p class="confidential-note">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="5" width="10" height="7" rx="1.5" stroke="#B0BFCB" stroke-width="1"/><path d="M4 5V3.5a2 2 0 114 0V5" stroke="#B0BFCB" stroke-width="1"/></svg>
+            Your responses are confidential and used solely for assessment purposes.
+          </p>
+        </div>
+
+        <!-- ── QUESTION ── -->
+        <div id="screen-question" class="screen">
+          <div class="progress-header">
+            <div class="prog-meta">
+              <span style="font-size:12px;color:var(--text-muted);" id="prog-label">Question 1 of 12</span>
+              <span class="prog-counter" id="prog-pct">0%</span>
+            </div>
+            <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+          </div>
+          <p class="q-num" id="q-num">01 / 12</p>
+          <p class="q-text" id="q-text"></p>
+          <p class="q-hint" id="q-hint"></p>
+          <div class="options-list" id="options-list"></div>
+          <div id="multi-section" style="display:none;">
+            <p class="q-multi-note" id="multi-note">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="3" stroke="#007A5E" stroke-width="1.5"/><path d="M4 7L6.5 9.5L10 5" stroke="#007A5E" stroke-width="1.5" stroke-linecap="round"/></svg>
+              Select up to 3 options
+            </p>
+            <div class="multi-options-list" id="multi-options-list"></div>
+          </div>
+          <div class="nav-row">
+            <button class="btn-back" id="btn-back" disabled>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13 8H3M7 12L3 8L7 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Back
+            </button>
+            <button class="btn-primary" id="btn-next" disabled>
+              Next
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M9 4L13 8L9 12" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- ── RESULT ── -->
+        <div id="screen-result" class="screen">
+          <div class="result-header">
+            <div class="score-ring-wrap">
+              <svg viewBox="0 0 180 180">
+                <circle class="score-ring-bg" cx="90" cy="90" r="78"/>
+                <circle class="score-ring-fg" id="score-arc" cx="90" cy="90" r="78" stroke-dasharray="490" stroke-dashoffset="490"/>
+              </svg>
+              <div class="score-center">
+                <span class="score-num" id="score-num">0</span>
+                <span class="score-denom">/ 100</span>
+              </div>
+            </div>
+            <p class="result-grade" id="result-grade"></p>
+            <p class="result-tagline" id="result-tagline"></p>
+          </div>
+
+          <div class="section-label-row">
+            <h3>Score Breakdown</h3><div class="section-divider"></div>
+          </div>
+          <div class="breakdown-grid" id="breakdown-grid"></div>
+
+          <div class="section-label-row">
+            <h3>Your Priorities &amp; Challenges</h3><div class="section-divider"></div>
+          </div>
+          <div id="multi-results-area"></div>
+
+          <div class="send-area">
+            <button class="btn-send" id="btn-send">Send My Report to HPE Specialist →</button>
+            <p class="send-note">Submit your results to your HPE specialist to unlock a complimentary consultation aligned to your most critical gaps and priorities.</p>
+          </div>
+        </div>
+
+      </div><!-- /card-body -->
+    </div><!-- /survey-card -->
+  </main>
+
+  <footer>© 2025 Hewlett Packard Enterprise · APAC Hybrid Cloud Solutions</footer>
+</div>
+
+<div class="toast" id="toast">
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="display:inline;vertical-align:middle;margin-right:6px;"><circle cx="7" cy="7" r="6" stroke="#01A982" stroke-width="1.5"/><path d="M4 7L6.5 9.5L10 5" stroke="#01A982" stroke-width="1.5" stroke-linecap="round"/></svg>
+  Report sent! Your HPE specialist will be in touch shortly.
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────
+const RECIPIENT_EMAIL = "your@hpe-specialist.com";
+
+// ── DISPLAY CATEGORIES ──────────────────────────────
+// Each display category lists the internal question sections to merge.
+// Scores are summed and a combined percentage is shown.
+const DISPLAY_CATEGORIES = [
+  {
+    label: "Infrastructure Readiness",
+    color: "#01A982",
+    sections: ["Hardware Immutability", "Cyber Resilience Maturity", "Immutability Depth"]
+  },
+  {
+    label: "Monitoring & Resiliency",
+    color: "#00739D",
+    sections: ["Monitoring & Visibility", "Ransomware Resilience"]
+  },
+  {
+    label: "Mobility and Replication",
+    color: "#8B5CF6",
+    sections: ["Hybrid Cloud Mobility", "Data Replication"]
+  },
+  {
+    label: "Capability & Speed",
+    color: "#FF8D6D",
+    sections: ["Recovery Capability", "Recovery Speed"]
+  }
+];
+
+// ── QUESTIONS ───────────────────────────────────────
+const questions = [
+  {
+    type:'single', scored:true, section:"Ransomware Resilience",
+    text:"How ransomware resilient is your backup and recovery capability today?",
+    hint:"Think about whether an attacker who gained admin access could destroy your backups before you noticed.",
+    options:[
+      {label:"Our backups are on a separate network and a compromised account cannot touch them", desc:"Isolation, immutability, and tested recovery are all in place", score:4},
+      {label:"We back up regularly but have not tested what happens under an active attack",      desc:"Backups exist and are scheduled, but resilience is assumed rather than proven", score:1},
+      {label:"Immutable copies exist, though we haven't validated recovery end-to-end",           desc:"The data is protected but the recovery process itself hasn't been stress-tested", score:3},
+      {label:"Our backups live on the same infrastructure as production",                          desc:"A ransomware attack on production would likely reach the backups too", score:0}
+    ]
+  },
+  {
+    type:'single', scored:true, section:"Cyber Resilience Maturity",
+    text:"How mature is your cyber resilience posture?",
+    hint:"This goes beyond having backups — it covers governance, response planning, and whether leadership understands your recovery capability.",
+    options:[
+      {label:"We have runbooks, conduct drills, and leadership gets regular resilience updates", desc:"Cyber resilience is treated as an ongoing programme, not a one-time project", score:4},
+      {label:"We would figure it out as the incident unfolded — no formal plan exists",          desc:"Recovery depends on individual knowledge rather than documented process", score:0},
+      {label:"Policies are written down but the team has never rehearsed them",                  desc:"Plans exist on paper; real-world gaps would surface during an incident", score:3},
+      {label:"IT handles incidents reactively — there is no structured resilience framework",    desc:"Responses are ad hoc and inconsistent; governance is limited", score:1}
+    ]
+  },
+  {
+    type:'single', scored:true, section:"Hardware Immutability",
+    text:"Do you have immutable backups across critical workloads?",
+    hint:"If an attacker obtained your backup admin credentials, could they delete or encrypt your backup data?",
+    options:[
+      {label:"A compromised admin account could still reach and modify our backup data",         desc:"Backups exist on separate servers but are accessible from the network", score:1},
+      {label:"Our backup storage enforces write protection at the hardware level",               desc:"Immutability is built into the storage device itself — no credential can override it", score:4},
+      {label:"Immutability is enforced by our backup software, not the underlying hardware",     desc:"OS-level protection is in place; the physical storage layer is not independently locked", score:3},
+      {label:"There is nothing preventing backups from being deleted or overwritten",            desc:"No immutability controls exist — backups are as vulnerable as production data", score:0}
+    ]
+  },
+  {
+    type:'single', scored:true, section:"Infrastructure Readiness",
+    text:"How ready is your infrastructure for modernisation and hybrid cloud?",
+    hint:"Consider whether your current hardware and platforms could support workload mobility across on-premises and cloud environments.",
+    options:[
+      {label:"We are running workloads across on-prem and cloud today",                          desc:"Hybrid cloud is operational — data and compute move across environments as needed", score:4},
+      {label:"Our hardware is aging and a cloud migration would require significant re-architecture", desc:"Legacy dependencies make hybrid cloud adoption a major undertaking", score:1},
+      {label:"Our platforms are modern but cloud integration is still being planned",            desc:"The foundation is ready; the roadmap and project are in progress", score:3},
+      {label:"We are on-prem only with no current plans for cloud",                              desc:"Cloud adoption has not been prioritised or scoped", score:0}
+    ]
+  },
+  {
+    type:'single', scored:true, section:"Monitoring & Visibility",
+    text:"How effectively do you monitor backup and storage infrastructure?",
+    hint:"Would you know within the hour if a backup job silently failed, or if data was being encrypted at an unusual rate?",
+    options:[
+      {label:"We get alerted automatically on failures and review a health dashboard daily",     desc:"Monitoring is active and consistent; issues surface before they become critical", score:3},
+      {label:"We have real-time dashboards, anomaly detection, and automated alerting in place", desc:"Unusual activity — including encryption-like patterns — triggers an alert immediately", score:4},
+      {label:"We check backup logs periodically — there is no automated alerting",               desc:"A failed or compromised backup could go undetected for days", score:1},
+      {label:"We would likely only discover an issue when trying to restore",                    desc:"No visibility into backup health until recovery is actually attempted", score:0}
+    ]
+  },
+  {
+    type:'single', scored:true, section:"Data Replication",
+    text:"How consistent is your data replication across environments?",
+    hint:"If your primary site went offline right now, how confident are you in the state of your secondary copy?",
+    options:[
+      {label:"Replication runs on a schedule but we have not verified the integrity of what arrives", desc:"Data is being copied, but whether it's recoverable hasn't been confirmed", score:3},
+      {label:"Our secondary copy is often behind — replication is manual or unreliable",         desc:"Gaps in replication mean recovery points may be incomplete or stale", score:1},
+      {label:"Replication is automated, integrity-checked, and we have tested failover",         desc:"We are confident the secondary environment reflects a clean, usable state", score:4},
+      {label:"We have a single copy of our data with no replication to any secondary location",  desc:"Loss or compromise of the primary site means there is no fallback", score:0}
+    ]
+  },
+  {
+    type:'single', scored:true, section:"Hybrid Cloud Mobility",
+    text:"How easily can your data move between clouds and on-premises?",
+    hint:"Think about what it would take to shift a critical workload to a different environment if your primary site was unavailable.",
+    options:[
+      {label:"Moving data between environments is possible but requires manual effort each time", desc:"Portability exists but is not automated or seamless", score:3},
+      {label:"Our data is effectively locked into one environment — moving it is a major project", desc:"Significant re-architecture or vendor involvement would be needed to migrate data", score:0},
+      {label:"Workloads and data can move between on-prem and cloud automatically via policy",    desc:"Data mobility is built into the platform — no manual intervention required", score:4},
+      {label:"Each environment manages data separately — there is no integration between them",   desc:"On-prem and cloud are siloed; moving data across them is complex and slow", score:1}
+    ]
+  },
+  {
+    type:'single', scored:true, section:"Recovery Capability",
+    text:"How well does your platform recover complex workloads?",
+    hint:"Think about your most critical application — one that spans multiple servers, databases, and dependencies. How would that recover?",
+    options:[
+      {label:"Recovery of complex systems is orchestrated automatically in the correct sequence", desc:"Failover is scripted end-to-end — dependencies are handled without manual coordination", score:4},
+      {label:"We rely on institutional knowledge to piece together the recovery order manually",  desc:"The right people need to be in the room — there is no documented or automated sequence", score:0},
+      {label:"We have runbooks but someone still has to execute every step by hand",             desc:"The process is documented; execution under pressure is still fully manual", score:1},
+      {label:"Core recovery steps are scripted, with some manual handoffs still required",       desc:"Automation handles the bulk of recovery; a few steps still need human intervention", score:3}
+    ]
+  },
+  {
+    type:'single', scored:true, section:"Recovery Speed",
+    text:"What is your current recovery time for critical systems following a ransomware attack?",
+    hint:"If ransomware detonated across your environment tonight, when would your critical systems be back online?",
+    options:[
+      {label:"We could have critical systems operational again within the hour",                  desc:"Instant recovery or hot standby means near-zero downtime for essential workloads", score:4},
+      {label:"We honestly do not know — recovery time has never been tested at scale",           desc:"There is no validated answer; actual RTO is an unknown", score:0},
+      {label:"Recovery would take the better part of a day — it is a manual process",           desc:"The team knows what to do, but execution takes significant time", score:1},
+      {label:"Orchestration tools would have us back up within a few hours",                     desc:"Automated runbooks reduce recovery time to a predictable, manageable window", score:3}
+    ]
+  },
+  {
+    type:'single', scored:true, section:"Immutability Depth",
+    text:"How long are your immutable backup copies retained?",
+    hint:"Ransomware can sit dormant for months before activating. Your clean recovery point needs to predate the infection.",
+    options:[
+      {label:"Our immutable copies go back at least three months",                               desc:"Recovery points exist well before a typical ransomware dwell period", score:4},
+      {label:"We retain immutable copies for somewhere between one and three months",            desc:"Reasonable coverage for most scenarios, though long-dormancy attacks may still be a risk", score:3},
+      {label:"We are not sure how far back our protected copies actually go",                    desc:"Retention policy is unclear — the clean recovery point may already be within the infection window", score:0},
+      {label:"Immutable backups are kept for less than a month",                                 desc:"A slowly spreading infection could have already reached the earliest available clean copy", score:1}
+    ]
+  },
+  {
+    type:'multi', scored:false, maxSelect:3, section:"Modernisation Priorities",
+    text:"What are your top modernisation priorities?",
+    hint:"Select up to 3 areas most relevant to your organisation's current roadmap and strategic objectives.",
+    options:[
+      {label:"Strengthen ransomware protection",  desc:"Enhance immutability, isolation, and attack-resilient data protection capabilities"},
+      {label:"Improve recovery time",             desc:"Reduce recovery windows through automation, orchestration, and faster restores"},
+      {label:"Reduce operational cost",           desc:"Simplify operations, reduce complexity, and optimise infrastructure efficiency"},
+      {label:"Improve hybrid cloud mobility",     desc:"Enable seamless data movement across on-premises and cloud environments"},
+      {label:"Reduce reliance on VMware",         desc:"Increase platform flexibility and mitigate virtualisation dependency risks"},
+      {label:"Modernise backup and storage",      desc:"Replace legacy systems with scalable, software-defined platforms"},
+      {label:"Improve compliance and reporting",  desc:"Strengthen audit readiness, visibility, and regulatory reporting accuracy"}
+    ]
+  },
+  {
+    type:'multi', scored:false, maxSelect:3, section:"Current Challenges",
+    text:"What challenges do you currently face?",
+    hint:"Select up to 3 issues that best reflect your environment today.",
+    options:[
+      {label:"Backup performance issues",              desc:"Backups or restores frequently miss windows or impact production workloads"},
+      {label:"Scalability constraints",                desc:"Infrastructure struggles to scale with data growth and retention demands"},
+      {label:"Cost concerns",                          desc:"Rising licensing, infrastructure, and operational costs strain budgets"},
+      {label:"VMware dependency",                      desc:"Heavy reliance on VMware limits flexibility and increases long-term risk"},
+      {label:"Too many tools",                         desc:"Fragmented tools increase complexity, overhead, and operational inefficiency"},
+      {label:"Insufficient immutability and security", desc:"Backups lack strong protection against tampering or ransomware attacks"},
+      {label:"No major challenges",                    desc:"Current environment meets performance, security, and operational expectations"}
+    ]
+  }
+];
+
+// ── STATE ────────────────────────────────────────────
+let currentQ = 0;
+const answers = {};
+let userData = {};
+
+// ── RENDER QUESTION ──────────────────────────────────
+function renderQuestion(idx) {
+  const q = questions[idx];
+  const total = questions.length;
+  const pct = Math.round((idx / total) * 100);
+
+  document.getElementById('q-num').textContent       = String(idx+1).padStart(2,'0') + ' / ' + total;
+  document.getElementById('q-text').textContent      = q.text;
+  document.getElementById('q-hint').textContent      = q.hint;
+  document.getElementById('prog-fill').style.width   = pct + '%';
+  document.getElementById('prog-label').textContent  = 'Question ' + (idx+1) + ' of ' + total;
+  document.getElementById('prog-pct').textContent    = pct + '%';
+  document.getElementById('btn-back').disabled       = idx === 0;
+
+  const isLast = idx === total - 1;
+  document.getElementById('btn-next').innerHTML = isLast
+    ? 'See My Results <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M9 4L13 8L9 12" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    : 'Next <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M9 4L13 8L9 12" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  if (q.type === 'single') {
+    document.getElementById('options-list').style.display  = 'flex';
+    document.getElementById('multi-section').style.display = 'none';
+    renderSingle(idx);
+  } else {
+    document.getElementById('options-list').style.display  = 'none';
+    document.getElementById('multi-section').style.display = 'block';
+    document.getElementById('multi-note').innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="3" stroke="#007A5E" stroke-width="1.5"/><path d="M4 7L6.5 9.5L10 5" stroke="#007A5E" stroke-width="1.5" stroke-linecap="round"/></svg> Select up to ' + q.maxSelect + ' options';
+    renderMulti(idx);
+  }
+}
+
+function renderSingle(idx) {
+  const q = questions[idx];
+  const list = document.getElementById('options-list');
+  list.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    const sel = answers[idx] === i;
+    btn.className = 'opt' + (sel ? ' selected' : '');
+    btn.innerHTML = '<div class="opt-radio"><div class="opt-radio-inner"></div></div><div class="opt-body"><span class="opt-label">' + opt.label + '</span><span class="opt-desc">' + opt.desc + '</span></div>';
+    if (sel) {
+      btn.style.borderColor = 'var(--hpe-green)';
+      btn.style.background  = '#EBF8F4';
+      btn.querySelector('.opt-radio').style.borderColor = 'var(--hpe-green)';
+      btn.querySelector('.opt-radio').style.background  = 'var(--hpe-green)';
+    }
+    btn.onclick = () => {
+      answers[idx] = i;
+      document.querySelectorAll('.opt').forEach((b, j) => {
+        const s = j === i;
+        b.classList.toggle('selected', s);
+        b.style.borderColor = s ? 'var(--hpe-green)' : 'transparent';
+        b.style.background  = s ? '#EBF8F4' : 'var(--surface)';
+        b.querySelector('.opt-radio').style.borderColor = s ? 'var(--hpe-green)' : '#C4D0DA';
+        b.querySelector('.opt-radio').style.background  = s ? 'var(--hpe-green)' : 'transparent';
+      });
+      document.getElementById('btn-next').disabled = false;
+    };
+    list.appendChild(btn);
+  });
+  document.getElementById('btn-next').disabled = answers[idx] === undefined;
+}
+
+function renderMulti(idx) {
+  const q = questions[idx];
+  if (!answers[idx]) answers[idx] = new Set();
+  const sel = answers[idx];
+  const list = document.getElementById('multi-options-list');
+  list.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'mopt' + (sel.has(i) ? ' selected' : '');
+    btn.innerHTML = '<div class="mopt-checkbox"><svg class="mopt-check" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4.5 7.5L8 3" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="mopt-body"><span class="mopt-label">' + opt.label + '</span><span class="mopt-desc">' + opt.desc + '</span></div>';
+    btn.onclick = () => {
+      if (sel.has(i)) { sel.delete(i); }
+      else if (sel.size < q.maxSelect) { sel.add(i); }
+      renderMulti(idx);
+      document.getElementById('btn-next').disabled = sel.size === 0;
+    };
+    list.appendChild(btn);
+  });
+  document.getElementById('btn-next').disabled = sel.size === 0;
+}
+
+// ── SCORE CALCULATION ────────────────────────────────
+// Returns overall % and per-section raw totals/maxes
+function calcScores() {
+  const totals = {}, maxes = {};
+  let ts = 0, tm = 0;
+  questions.forEach((q, i) => {
+    if (!q.scored) return;
+    const mx = Math.max(...q.options.map(o => o.score));
+    if (maxes[q.section] === undefined) { maxes[q.section] = 0; totals[q.section] = 0; }
+    maxes[q.section] += mx; tm += mx;
+    if (answers[i] !== undefined) {
+      const s = q.options[answers[i]].score;
+      totals[q.section] += s; ts += s;
+    }
+  });
+  return { totals, maxes, overall: Math.round((ts / tm) * 100) };
+}
+
+// Merge per-section scores into the 4 display categories
+function calcDisplayCategories(rawScores) {
+  return DISPLAY_CATEGORIES.map(cat => {
+    let total = 0, max = 0;
+    cat.sections.forEach(s => {
+      if (rawScores.totals[s] !== undefined) total += rawScores.totals[s];
+      if (rawScores.maxes[s]  !== undefined) max   += rawScores.maxes[s];
+    });
+    const pct = max > 0 ? Math.round((total / max) * 100) : 0;
+    return { label: cat.label, color: cat.color, pct, subLabels: cat.sections };
+  });
+}
+
+// ── SHOW RESULT ──────────────────────────────────────
+function showResult() {
+  document.getElementById('screen-question').classList.remove('active');
+  document.getElementById('screen-result').classList.add('active');
+
+  const sc   = calcScores();
+  const cats = calcDisplayCategories(sc);
+  const o    = sc.overall;
+
+  let grade, tagline, color;
+  if (o >= 80)      { grade = "Strong Resilience";       color = "#01A982"; tagline = "Your organisation has solid foundations in backup, immutability, and recovery speed. Focus on continuous testing and automation to maintain industry-leading resilience."; }
+  else if (o >= 60) { grade = "Moderate Resilience";     color = "#00739D"; tagline = "Core controls are in place, but meaningful gaps in immutability, recovery speed, or replication remain that a ransomware actor could exploit."; }
+  else if (o >= 40) { grade = "Limited Resilience";      color = "#FF8D6D"; tagline = "Significant exposure exists across multiple areas. Without targeted remediation, a ransomware attack could result in extended downtime and potential data loss."; }
+  else              { grade = "Critical Gaps Identified"; color = "#FC5A5A"; tagline = "Your organisation faces high risk of severe disruption. Immediate action across backup, immutability, and recovery is strongly recommended."; }
+
+  document.getElementById('score-num').textContent        = o;
+  document.getElementById('score-num').style.color        = color;
+  document.getElementById('result-grade').textContent     = grade;
+  document.getElementById('result-grade').style.color     = color;
+  document.getElementById('result-tagline').textContent   = tagline;
+
+  const arc  = document.getElementById('score-arc');
+  const circ = 2 * Math.PI * 78;
+  arc.style.stroke            = color;
+  arc.style.strokeDasharray   = circ;
+  arc.style.strokeDashoffset  = circ;
+  setTimeout(() => { arc.style.strokeDashoffset = circ - (o / 100) * circ; }, 120);
+
+  // Build 4-category breakdown cards
+  const grid = document.getElementById('breakdown-grid');
+  grid.innerHTML = '';
+  cats.forEach(cat => {
+    const card = document.createElement('div');
+    card.className = 'bd-card';
+    // only show sub-labels that actually have questions mapped
+    const activeSubs = cat.subLabels.filter(s => sc.maxes[s] !== undefined);
+    const pillsHtml  = activeSubs.map(s => '<span class="bd-sub-pill">' + s + '</span>').join('');
+    card.innerHTML =
+      '<div class="bd-header">' +
+        '<span class="bd-title">' + cat.label + '</span>' +
+        '<span class="bd-pct" style="color:' + cat.color + '">' + cat.pct + '%</span>' +
+      '</div>' +
+      '<div class="bd-bar-track"><div class="bd-bar-fill" style="width:0%;background:' + cat.color + ';" data-pct="' + cat.pct + '"></div></div>' +
+      '<div class="bd-sub-labels">' + pillsHtml + '</div>';
+    grid.appendChild(card);
+  });
+  setTimeout(() => {
+    document.querySelectorAll('.bd-bar-fill').forEach(el => { el.style.width = el.dataset.pct + '%'; });
+  }, 200);
+
+  // Multi-select results
+  const multiArea = document.getElementById('multi-results-area');
+  multiArea.innerHTML = '';
+  questions.forEach((q, i) => {
+    if (q.type !== 'multi') return;
+    const sel = answers[i];
+    if (!sel || sel.size === 0) return;
+    const block = document.createElement('div');
+    block.className = 'multi-result-block';
+    const items = [...sel].map(j => q.options[j].label);
+    block.innerHTML = '<h4>' + q.section + '</h4><ul>' +
+      items.map(l => '<li><div class="multi-bullet"></div><span>' + l + '</span></li>').join('') +
+      '</ul>';
+    multiArea.appendChild(block);
+  });
+}
+
+// ── NAVIGATION ───────────────────────────────────────
+document.getElementById('intro-next').onclick = () => {
+  const name    = document.getElementById('f-name').value.trim();
+  const title   = document.getElementById('f-title').value.trim();
+  const company = document.getElementById('f-company').value.trim();
+  const email   = document.getElementById('f-email').value.trim();
+  if (!name || !title || !company || !email) { alert('Please fill in all required fields before starting.'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Please enter a valid work email address.'); return; }
+  userData = { name, title, company, email };
+  document.getElementById('screen-intro').classList.remove('active');
+  document.getElementById('screen-question').classList.add('active');
+  renderQuestion(0);
+};
+
+document.getElementById('btn-next').onclick = () => {
+  if (currentQ < questions.length - 1) {
+    currentQ++; renderQuestion(currentQ);
+    document.querySelector('.card-body').scrollIntoView({ behavior:'smooth', block:'start' });
+  } else {
+    showResult();
+    document.querySelector('.card-body').scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+};
+
+document.getElementById('btn-back').onclick = () => {
+  if (currentQ > 0) { currentQ--; renderQuestion(currentQ); }
+};
+
+// ── SEND REPORT ──────────────────────────────────────
+document.getElementById('btn-send').onclick = () => {
+  const btn = document.getElementById('btn-send');
+  btn.disabled = true; btn.textContent = 'Preparing report...';
+
+  const sc   = calcScores();
+  const cats = calcDisplayCategories(sc);
+
+  // Detailed responses — scored questions
+  const scoredResponses = questions
+    .filter(q => q.scored)
+    .map((q, i) => {
+      // map back to original index
+      const origIdx = questions.indexOf(q);
+      const ans   = answers[origIdx] !== undefined ? q.options[answers[origIdx]].label : 'Not answered';
+      return 'Q' + String(origIdx+1).padStart(2,'0') + '. ' + q.text + '\nAnswer: ' + ans + '\n';
+    }).join('\n');
+
+  // Multi-select responses
+  const multiResponses = questions
+    .filter(q => q.type === 'multi')
+    .map(q => {
+      const origIdx = questions.indexOf(q);
+      const sel = answers[origIdx];
+      const chosen = sel && sel.size > 0 ? [...sel].map(j => '  - ' + q.options[j].label).join('\n') : '  Not answered';
+      return q.section + ':\n' + chosen;
+    }).join('\n\n');
+
+  // Email subject — company name only, no score
+  const subject = '[Data Resilience Readiness Assessment] ' + userData.company;
+
+  const body = [
+    '═══════════════════════════════════════════',
+    'DATA RESILIENCE READINESS ASSESSMENT',
+    'APAC Hybrid Cloud Solutions',
+    '═══════════════════════════════════════════',
+    '',
+    'RESPONDENT',
+    '──────────',
+    'Name:    ' + userData.name,
+    'Title:   ' + userData.title,
+    'Company: ' + userData.company,
+    'Email:   ' + userData.email,
+    '',
+    'OVERALL RESILIENCE SCORE: ' + sc.overall + ' / 100',
+    '',
+    'DETAILED RESPONSES',
+    '──────────────────',
+    scoredResponses,
+    'PRIORITIES & CHALLENGES',
+    '───────────────────────',
+    multiResponses,
+    '',
+    '═══════════════════════════════════════════',
+    'Generated by Data Resilience Readiness Assessment',
+    'APAC Hybrid Cloud Solutions'
+  ].join('\n');
+
+  const mailto = 'mailto:' + RECIPIENT_EMAIL +
+    '?subject=' + encodeURIComponent(subject) +
+    '&body='    + encodeURIComponent(body);
+
+  const a = document.createElement('a');
+  a.href = mailto;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+
+  setTimeout(() => {
+    btn.textContent    = '✓ Report Sent to HPE Specialist';
+    btn.style.background = 'linear-gradient(135deg, #007A5E, #005A47)';
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 5000);
+  }, 800);
+};
+</script>
+</body>
+</html>
